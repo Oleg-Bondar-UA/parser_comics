@@ -128,3 +128,8 @@ toomics.json
 failed_daycomics.json
 daycomics.xml
 *_downloads/
+
+# Chromedriver
+chromedriver/
+chromedriver.exe
+chromedriver_binary/
