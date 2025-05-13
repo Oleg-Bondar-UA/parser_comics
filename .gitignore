@@ -125,8 +125,11 @@ dmypy.json
 # Project specific files
 daycomics.json
 toomics.json
+honeytoon.json
 failed_daycomics.json
 daycomics.xml
+toomics.xml
+honeytoon.xml
 *_downloads/
 
 # Chromedriver
