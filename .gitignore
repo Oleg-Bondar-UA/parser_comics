@@ -123,6 +123,8 @@ dmypy.json
 *.code-workspace
 
 # Project specific files
+*.json
+*.xml
 daycomics.json
 toomics.json
 honeytoon.json
