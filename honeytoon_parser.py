@@ -90,6 +90,7 @@ try:
                     "originalTitle": original_title.upper(),  # "STEPMOM'S SISTERS" format
                     "description": description,
                     "thumbnail": "thumbnail.jpg",
+                    "thumbnailBackground":"",
                     "previewThumbnail": "preview-thumbnail.jpg",
                     "genres": genres,
                     "tags": tags,
@@ -130,6 +131,8 @@ try:
                             img_file.write(chunk)
 
                 links_file_path = os.path.join(comic_dir, "links_episode.txt")
+                episode_thumbnails = {}  # Словник для зберігання посилань на зображення
+                
                 with open(links_file_path, "w", encoding="utf-8") as links_file:
                     comic_list = driver.find_element(By.CSS_SELECTOR,
                                                      "body > main > section.section.comic-list .comic-list-items")
@@ -137,24 +140,20 @@ try:
 
                     for index, episode in enumerate(episodes, start=1):
                         link = episode.get_attribute("href")
-                        image = episode.find_element(By.CSS_SELECTOR, ".comic-list__img img").get_attribute("src")
-                        episode_dir = os.path.join(comic_dir, str(index))
-                        os.makedirs(episode_dir, exist_ok=True)
-
+                        try:
+                            image = episode.find_element(By.CSS_SELECTOR, ".comic-list__img img").get_attribute("src")
+                            episode_thumbnails[link] = image
+                        except:
+                            print(f"Could not find thumbnail for episode {index}")
                         links_file.write(f"{link}\n")
-
-                        image_path = os.path.join(episode_dir, "thumbnail.jpg")
-                        response = session.get(image, stream=True, verify=False)
-                        if response.status_code == 200:
-                            with open(image_path, "wb") as img_file:
-                                for chunk in response.iter_content(1024):
-                                    img_file.write(chunk)
 
                 with open(links_file_path, "r", encoding="utf-8") as links_file:
                     episode_links = links_file.readlines()
+                    episode_counter = 1  # Лічильник для правильної нумерації папок
 
                     for episode_index, episode_link in enumerate(episode_links, start=1):
-                        driver.get(episode_link.strip())
+                        episode_link = episode_link.strip()
+                        driver.get(episode_link)
                         WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
 
                         time.sleep(5)
@@ -162,16 +161,23 @@ try:
                         header_title = driver.find_element(By.CLASS_NAME, "header-episode__title-number").text.strip()
                         print(f"Header title: {header_title}")
 
-                        chapter_index = ''.join(filter(str.isdigit, header_title))
-                        if not chapter_index:
-                            chapter_index = str(episode_index)
-                        else:
-                            chapter_index = str(episode_index)
-
-                        episode_dir = os.path.join(comic_dir, chapter_index)
-                        if not os.path.exists(episode_dir):
-                            print(f"Directory for chapter {chapter_index} does not exist: {episode_dir}")
+                        # Пропускаємо прологи
+                        if "prologue" in header_title.lower():
+                            print(f"Skipping prologue: {header_title}")
                             continue
+
+                        # Створюємо папку для епізоду тільки якщо це не пролог
+                        episode_dir = os.path.join(comic_dir, str(episode_counter))
+                        os.makedirs(episode_dir, exist_ok=True)
+
+                        # Завантажуємо thumbnail тільки для не-прологів
+                        if episode_link in episode_thumbnails:
+                            image_path = os.path.join(episode_dir, "thumbnail.jpg")
+                            response = session.get(episode_thumbnails[episode_link], stream=True, verify=False)
+                            if response.status_code == 200:
+                                with open(image_path, "wb") as img_file:
+                                    for chunk in response.iter_content(1024):
+                                        img_file.write(chunk)
 
                         single_inner = WebDriverWait(driver, 20).until(
                             EC.presence_of_element_located((By.CLASS_NAME, "single-inner"))
@@ -182,7 +188,7 @@ try:
 
                         for index, image in enumerate(images):
                             image_url = driver.execute_script("return arguments[0].currentSrc || arguments[0].src;", image)
-                            image_filename = f"episode_{chapter_index}_{index + 1}.jpg"
+                            image_filename = f"episode_{episode_counter}_{index + 1}.jpg"
                             episode_images.append(image_filename)
 
                             try:
@@ -208,20 +214,23 @@ try:
 
                         # Add episode data to comic_data structure
                         episode_data = {
-                            "parentTitle": display_title,  # Use the display_title here (Stepmoms sisters)
-                            "title": f"Episode {chapter_index}",
-                            "slag": f"episode-{chapter_index}",
+                            "parentTitle": display_title,
+                            "title": f"episode {episode_counter}",
+                            "slag": f"episode-{episode_counter}",
+                            "date": "",
                             "thumbnail": "thumbnail.jpg",
                             "images": episode_images
                         }
                         comic_data["episodes"].append(episode_data)
+                        
+                        episode_counter += 1  # Збільшуємо лічильник тільки після успішного оброблення епізоду
 
                 # Add the comic data to the comics_data list
                 comics_data.append(comic_data)
 
-                # Write the JSON file for this comic to its directory
-                with open(os.path.join(comic_dir, "comics_data.json"), "w", encoding="utf-8") as json_file:
-                    json.dump([comic_data], json_file, indent=2, ensure_ascii=False)
+    # Write all comics data to a single JSON file in the root directory
+    with open(os.path.join(base_dir, "all_comics.json"), "w", encoding="utf-8") as json_file:
+        json.dump(comics_data, json_file, indent=2, ensure_ascii=False)
 
 finally:
     driver.quit()

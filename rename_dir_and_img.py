@@ -31,7 +31,7 @@ def rename_directories_and_images(base_dir):
             for filename in os.listdir(temp_path):
                 old_file_path = os.path.join(temp_path, filename)
 
-                new_filename = re.sub(r'episode_(\d+)_(\d+)', f'episode_{new_dir}_\\2', filename)
+                new_filename = re.sub(r'[Ee]pisode_(\d+)_(\d+)', f'episode_{new_dir}_\\2', filename)
                 new_file_path = os.path.join(new_path, new_filename)
 
                 print(f"  Перейменовую файл {filename} → {new_filename}")
