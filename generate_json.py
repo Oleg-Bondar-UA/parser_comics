@@ -12,17 +12,14 @@ def generate_toomics_json(base_dirs):
         comic_data = {
             "title": comic_name,
             "originalTitle": comic_name,
-            "description": "Minsung is not a guy to be called handsome. He is fat, and looks old, but he got lucky "
-                           "to get married to the hot and beautiful Yura Jung. Yumi Jung her 20-year-old sister lives "
-                           "with them and really hates Minsung. One day he learns a disappointing secret. Check this "
-                           "story to know what he learned and how everything will go.",
+            "description": "",
             "thumbnail": "thumbnail.jpg",
             "thumbnailBackground": "thumbnail_background.jpg" if os.path.exists(
                 os.path.join(base_dir, "thumbnail_background.jpg")) else None,
             "previewThumbnail": "preview-thumbnail.jpg" if os.path.exists(
                 os.path.join(base_dir, "preview-thumbnail.jpg")) else None,
-            "genres": ["In-Law", "END"],
-            "tags": ["#cheating", "#hardcore", "#kindred", "#training", "#sisters"],
+            "genres": [],
+            "tags": ["#Outdoors", "#Cougar"],
             "episodes": []
         }
 
@@ -36,7 +33,7 @@ def generate_toomics_json(base_dirs):
             episode_images = []
             if os.path.exists(episode_path):
                 image_files = [f for f in os.listdir(episode_path) if
-                               f.startswith(f"episode_{episode_number}_") and f.endswith(".jpg")]
+                               f.startswith(f"episode_{episode_number}_") and f.endswith(".webp")]
                 image_files.sort(key=lambda x: int(x.split("_")[-1].split(".")[0]))
                 episode_images = image_files
 
@@ -54,17 +51,14 @@ def generate_toomics_json(base_dirs):
 
         comics_data.append(comic_data)
 
-    with open("toomics_training_sister.json", "w", encoding="utf-8") as f:
+    with open(f"{comic_name}.json", "w", encoding="utf-8") as f:
         json.dump(comics_data, f, indent=2, ensure_ascii=False)
 
     print(f"JSON файл успішно створено: toomics_training_sister.json")
 
 
 base_dirs = [
-    "Training Sister In Law Part-A",
-    "Training Sister In Law Part-B",
-    "Training Sister In Law Part-C",
-    "Training Sister In Law Part-D"
+    "Study Dates",
 ]
 
 generate_toomics_json(base_dirs)

@@ -47,5 +47,5 @@ def rename_directories_and_images(base_dir):
 
 
 # Приклад використання
-comic_dir = "Training Sister In Law Part-D"
+comic_dir = "Study Dates"
 rename_directories_and_images(comic_dir)
