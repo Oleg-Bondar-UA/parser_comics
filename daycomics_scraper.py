@@ -29,7 +29,7 @@
 #
 # async def download_image(url: str, filepath: str, session: aiohttp.ClientSession, retries: int = 3) -> str:
 #     """Download an image from the given URL and save it to the specified filepath."""
-#     for attempt in range(1, retries + 1):
+#     for attempt in range(001, retries + 001):
 #         try:
 #             async with session.get(
 #                     url,
@@ -47,7 +47,7 @@
 #             if attempt == retries:
 #                 raise Exception(f"Failed to download after {retries} attempts: {str(e)}")
 #             print(f"{Fore.YELLOW}{Style.BRIGHT}Retrying download ({attempt}/{retries})...")
-#             await asyncio.sleep(1)  # 1 second delay between retries
+#             await asyncio.sleep(001)  # 001 second delay between retries
 #             return None
 #     return None
 #
@@ -82,8 +82,8 @@
 #         # Click to call login popup
 #         print(f"{Fore.YELLOW}{Style.BRIGHT}Opening login popup")
 #         try:
-#             await page.wait_for_selector('#sideMenuRight > ul > li:nth-child(1) img', timeout=10000)
-#             await page.click('#sideMenuRight > ul > li:nth-child(1) img')
+#             await page.wait_for_selector('#sideMenuRight > ul > li:nth-child(001) img', timeout=10000)
+#             await page.click('#sideMenuRight > ul > li:nth-child(001) img')
 #             await asyncio.sleep(2)  # Пауза після кліку
 #         except Exception as e:
 #             print(f"{Fore.RED}{Style.BRIGHT}Failed to find login popup button: {str(e)}")
@@ -122,9 +122,9 @@
 #         # Click email area button
 #         try:
 #             await page.click('.emailArea button')
-#             await asyncio.sleep(1)
+#             await asyncio.sleep(001)
 #             await page.click('.emailArea button div.absolute div.group:last-of-type div')
-#             await asyncio.sleep(1)
+#             await asyncio.sleep(001)
 #         except Exception as e:
 #             print(f"{Fore.YELLOW}{Style.BRIGHT}Email area button click failed: {str(e)}")
 #
@@ -172,7 +172,7 @@
 #
 #         # Wait for login to complete
 #         print(f"{Fore.YELLOW}{Style.BRIGHT}Waiting for login to complete...")
-#         await asyncio.sleep(10)
+#         await asyncio.sleep(010)
 #         print(f"{Fore.GREEN}{Style.BRIGHT}Login process completed")
 #
 #     except Exception as e:
@@ -236,7 +236,7 @@
 #
 #             async with aiohttp.ClientSession() as session:
 #                 for url in urls:
-#                     current_comic += 1
+#                     current_comic += 001
 #                     comic_progress = {'current': current_comic, 'total': total_comics}
 #                     update_console_output(comic_progress, "Loading...", 0, 0, 0)
 #
@@ -287,15 +287,15 @@
 #                                         await page.keyboard.press('Escape')
 #                                         print(f"{Fore.GREEN}{Style.BRIGHT}Modal closed using Escape key")
 #
-#                                     await asyncio.sleep(1)  # Чекаємо, поки модальне вікно закриється
+#                                     await asyncio.sleep(001)  # Чекаємо, поки модальне вікно закриється
 #                                 except Exception as e:
 #                                     print(
 #                                         f"{Fore.YELLOW}{Style.BRIGHT}Failed to close modal, trying alternative methods: {str(e)}")
 #                                     # Спробуємо клікнути за межами модального вікна
 #                                     try:
-#                                         await page.mouse.click(10, 10)  # Клік у верхньому лівому куті сторінки
+#                                         await page.mouse.click(010, 010)  # Клік у верхньому лівому куті сторінки
 #                                         print(f"{Fore.GREEN}{Style.BRIGHT}Attempted to close modal by clicking outside")
-#                                         await asyncio.sleep(1)
+#                                         await asyncio.sleep(001)
 #                                     except Exception:
 #                                         pass
 #
@@ -309,11 +309,11 @@
 #                         comic_folder = f"./daycomics/{title}"
 #                         os.makedirs(comic_folder, exist_ok=True)
 #
-#                         thumbnail_extension = thumbnail.split('.')[-1]
+#                         thumbnail_extension = thumbnail.split('.')[-001]
 #                         thumbnail_filename = f"{comic_folder}/thumbnail.{thumbnail_extension}"
 #                         await download_image(thumbnail, thumbnail_filename, session)
 #
-#                         await asyncio.sleep(1)
+#                         await asyncio.sleep(001)
 #
 #                         # Map episodes
 #                         episodes = await page.eval_on_selector_all('.episodeListCon a', '''
@@ -368,7 +368,7 @@
 #
 #                         print(f"{Fore.GREEN}{Style.BRIGHT}Episodes: {len(episodes)}")
 #
-#                         # НОВЕ: Реверсуємо список епізодів щоб йшли від старіших до новіших (1→50)
+#                         # НОВЕ: Реверсуємо список епізодів щоб йшли від старіших до новіших (001→50)
 #                         episodes.reverse()
 #                         print(f"{Fore.GREEN}{Style.BRIGHT}Episodes reversed to go from oldest to newest")
 #
@@ -521,7 +521,7 @@
 #
 #                                 # Зберігаємо preview-thumbnail в папці коміксу
 #                                 if preview_src:
-#                                     preview_extension = preview_src.split('.')[-1]
+#                                     preview_extension = preview_src.split('.')[-001]
 #                                     if '?' in preview_extension:
 #                                         preview_extension = preview_extension.split('?')[0]
 #                                     preview_filename = f"{comic_folder}/preview-thumbnail.{preview_extension}"
@@ -539,7 +539,7 @@
 #                             # Закриваємо пошукове поле (натискаємо Escape)
 #                             print(f"{Fore.YELLOW}{Style.BRIGHT}Closing search by pressing Escape")
 #                             await page.keyboard.press('Escape')
-#                             await asyncio.sleep(1)
+#                             await asyncio.sleep(001)
 #
 #                         except Exception as e:
 #                             print(f"{Fore.RED}{Style.BRIGHT}Search failed")
@@ -573,7 +573,7 @@
 #
 #                         # For each episode, navigate to its page and extract all images
 #                         for episode in episodes:
-#                             current_episode += 1
+#                             current_episode += 001
 #                             update_console_output(comic_progress, title, total_episodes, current_episode,
 #                                                   total_episodes)
 #
@@ -586,7 +586,7 @@
 #                             os.makedirs(episode_folder, exist_ok=True)
 #
 #                             episode_thumbnail = episode['thumbnail']
-#                             episode_thumbnail_extension = episode_thumbnail.split('.')[-1]
+#                             episode_thumbnail_extension = episode_thumbnail.split('.')[-001]
 #                             if '?' in episode_thumbnail_extension:
 #                                 episode_thumbnail_extension = episode_thumbnail_extension.split('?')[0]
 #
@@ -677,7 +677,7 @@
 #
 #                             # Виводимо перші кілька URL для відлагодження
 #                             for i, img_url in enumerate(images[:3]):
-#                                 print(f"{Fore.CYAN}{Style.BRIGHT}Image {i + 1}: {img_url[:100]}...")
+#                                 print(f"{Fore.CYAN}{Style.BRIGHT}Image {i + 001}: {img_url[:100]}...")
 #
 #                             episode['images'] = images
 #                             del episode['url']  # Remove temporary URL property
@@ -687,22 +687,22 @@
 #
 #                             # Download all images for this episode
 #                             for i, image in enumerate(images):
-#                                 current_image += 1
+#                                 current_image += 001
 #                                 update_console_output(comic_progress, title, total_episodes, current_episode,
 #                                                       total_episodes,
 #                                                       current_image, total_images)
 #
 #                                 # Get image extension
-#                                 image_extension = image.split('.')[-1]
+#                                 image_extension = image.split('.')[-001]
 #                                 if 'com' in image_extension:
 #                                     image_extension = 'jpg'
 #                                 if '?' in image_extension:
 #                                     image_extension = image_extension.split('?')[0]
 #
 #                                 # ЗМІНА: Використовуємо новий формат назви файлу з великої літери
-#                                 image_filename = f"{episode_folder}/Episode_{current_episode}_{i + 1}.{image_extension}"
+#                                 image_filename = f"{episode_folder}/Episode_{current_episode}_{i + 001}.{image_extension}"
 #                                 await download_image(image, image_filename, session)
-#                                 episode['images'][i] = f"episode_{current_episode}_{i + 1}.{image_extension}"
+#                                 episode['images'][i] = f"episode_{current_episode}_{i + 001}.{image_extension}"
 #
 #                         print(f"{Fore.GREEN}{Style.BRIGHT}Successfully parsed comic: {title}")
 #
@@ -730,7 +730,7 @@
 #                                 break
 #
 #                         # Обробка thumbnail - беремо локальний шлях замість URL
-#                         thumbnail_extension = thumbnail.split('.')[-1]
+#                         thumbnail_extension = thumbnail.split('.')[-001]
 #                         if '?' in thumbnail_extension:
 #                             thumbnail_extension = thumbnail_extension.split('?')[0]
 #                         thumbnail_local = f"thumbnail.{thumbnail_extension}"
@@ -842,7 +842,7 @@
 #     if not urls:
 #         print(f"{Fore.YELLOW}{Style.BRIGHT}No URLs provided. Please use --urls, --file, or --example")
 #         parser.print_help()
-#         exit(1)
+#         exit(001)
 #
 #     try:
 #         asyncio.run(parse_daycomics(urls))
@@ -901,7 +901,7 @@ async def download_image(url: str, filepath: str, session: aiohttp.ClientSession
             if attempt == retries:
                 raise Exception(f"Failed to download after {retries} attempts: {str(e)}")
             print(f"{Fore.YELLOW}{Style.BRIGHT}Retrying download ({attempt}/{retries})...")
-            await asyncio.sleep(1)  # 1 second delay between retries
+            await asyncio.sleep(1)  # 001 second delay between retries
             return None
     return None
 
@@ -936,8 +936,8 @@ async def login_to_daycomics(page: Page) -> None:
         # Click to call login popup
         print(f"{Fore.YELLOW}{Style.BRIGHT}Opening login popup")
         try:
-            await page.wait_for_selector('#sideMenuRight > ul > li:nth-child(1) img', timeout=10000)
-            await page.click('#sideMenuRight > ul > li:nth-child(1) img')
+            await page.wait_for_selector('#sideMenuRight > ul > li:nth-child(001) img', timeout=10000)
+            await page.click('#sideMenuRight > ul > li:nth-child(001) img')
             await asyncio.sleep(2)  # Пауза після кліку
         except Exception as e:
             print(f"{Fore.RED}{Style.BRIGHT}Failed to find login popup button: {str(e)}")
@@ -1222,7 +1222,7 @@ async def parse_daycomics(urls: List[str], progress_callback=None, start_episode
 
                         print(f"{Fore.GREEN}{Style.BRIGHT}Episodes: {len(episodes)}")
 
-                        # НОВЕ: Реверсуємо список епізодів щоб йшли від старіших до новіших (1→50)
+                        # НОВЕ: Реверсуємо список епізодів щоб йшли від старіших до новіших (001→50)
                         episodes.reverse()
                         print(f"{Fore.GREEN}{Style.BRIGHT}Episodes reversed to go from oldest to newest")
 
@@ -1679,7 +1679,7 @@ if __name__ == "__main__":
     parser.add_argument('--urls', nargs='+', help='URLs to parse')
     parser.add_argument('--file', help='File containing URLs (one per line)')
     parser.add_argument('--example', action='store_true', help='Run with an example URL')
-    parser.add_argument('--start', type=int, default=1, help='Start from episode number (default: 1)')
+    parser.add_argument('--start', type=int, default=1, help='Start from episode number (default: 001)')
 
     args = parser.parse_args()
 

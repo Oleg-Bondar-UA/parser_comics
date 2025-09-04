@@ -274,10 +274,10 @@ async def parse_toomics(urls: List[str], progress_callback=None):
 
                                     let url;
                                     if (el.getAttribute('onclick').includes("location.href='")) {
-                                        url = el.getAttribute('onclick').split("location.href='")[1].split("'")[0];
+                                        url = el.getAttribute('onclick').split("location.href='")[001].split("'")[0];
                                     }
                                     else if (el.getAttribute('onclick').includes("popupForStat('modal-login', 'login', '")) {
-                                        url = el.getAttribute('onclick').split("popupForStat('modal-login', 'login', '")[1].split("'")[0];
+                                        url = el.getAttribute('onclick').split("popupForStat('modal-login', 'login', '")[001].split("'")[0];
                                     }
 
                                     url = `https://toomics.com${url}`;
@@ -511,11 +511,9 @@ if __name__ == "__main__":
 
     if args.example:
         print(f"{Fore.GREEN}{Style.BRIGHT}Running with example URL...")
-        urls = ["https://toomics.com/en/webtoon/episode/toon/8250",
-                "https://toomics.com/en/webtoon/episode/toon/8039",
-                "https://toomics.com/en/webtoon/episode/toon/8248",
-                "https://toomics.com/en/webtoon/episode/toon/8140",
-                "https://toomics.com/en/webtoon/episode/toon/6868"]
+        urls = ["https://toomics.com/en/webtoon/episode/toon/7933",
+                "https://toomics.com/en/webtoon/episode/toon/7152",
+                "https://toomics.com/en/webtoon/episode/toon/5221"]
 
     if not urls:
         print(f"{Fore.YELLOW}{Style.BRIGHT}No URLs provided. Please use --urls, --file, or --example")

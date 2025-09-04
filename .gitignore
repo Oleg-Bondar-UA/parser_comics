@@ -139,3 +139,5 @@ chromedriver/
 chromedrivers/
 chromedriver.exe
 chromedriver_binary/
+/honeytoon/
+/toomics/

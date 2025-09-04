@@ -17,6 +17,7 @@ from selenium.common.exceptions import WebDriverException, TimeoutException
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from urllib.parse import urlparse
+from webdriver_manager.chrome import ChromeDriverManager
 
 load_dotenv()
 
@@ -95,9 +96,9 @@ session.mount("https://", HTTPAdapter(max_retries=retries))
 
 chrome_options = Options()
 chrome_options.add_argument(
-    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    "user-agent=Mozilla/5.0 (Windows NT 010.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 )
-service = Service("chromedrivers/chromedriver")
+service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
 base_dir = "honeytoon"
@@ -282,7 +283,7 @@ try:
                                             continue
 
                                         # Створюємо папку для епізоду
-                                        episode_dir = os.path.join(comic_dir, str(episode_counter))
+                                        episode_dir = os.path.join(comic_dir, f"{episode_counter:03d}")
                                         os.makedirs(episode_dir, exist_ok=True)
 
                                         # Завантажуємо thumbnail епізоду
@@ -310,7 +311,7 @@ try:
                                             for index, image in enumerate(images):
                                                 image_url = driver.execute_script(
                                                     "return arguments[0].currentSrc || arguments[0].src;", image)
-                                                image_filename = f"episode_{episode_counter}_{index + 1}.jpg"
+                                                image_filename = f"episode_{episode_counter:03d}_{index + 1:03d}.jpg"
                                                 episode_images.append(image_filename)
 
                                                 try:
@@ -337,8 +338,8 @@ try:
                                             # Add episode data to comic_data structure
                                             episode_data = {
                                                 "parentTitle": display_title,
-                                                "title": f"episode {episode_counter}",
-                                                "slag": f"episode-{episode_counter}",
+                                                "title": f"episode {episode_counter:03d}",
+                                                "slag": f"episode-{episode_counter:03d}",
                                                 "date": "",
                                                 "thumbnail": "thumbnail.jpg",
                                                 "images": episode_images
@@ -377,7 +378,7 @@ try:
                 continue
 
     # Збереження результатів
-    with open(os.path.join(base_dir, "all_comics.json"), "w", encoding="utf-8") as json_file:
+    with open(os.path.join(base_dir, "stolen_taste.json"), "w", encoding="utf-8") as json_file:
         json.dump(comics_data, json_file, indent=2, ensure_ascii=False)
 
     # Збереження невдалих URL
