@@ -90,18 +90,80 @@ async def login_to_daycomics(page: Page) -> None:
             print(f"{Fore.RED}{Style.BRIGHT}Failed to find login popup button: {str(e)}")
             return
 
-        # Натискаємо на Google кнопку для логіну
-        print(f"{Fore.YELLOW}{Style.BRIGHT}Clicking Google login button")
+        # Натискаємо на кнопку "Log In" для переключення в режим логіну
+        print(f"{Fore.YELLOW}{Style.BRIGHT}Clicking 'Log In' button to switch to login mode")
         try:
-            await page.wait_for_selector('#google-button', timeout=10000)
-            await page.click('#google-button')
-            print(f"{Fore.GREEN}{Style.BRIGHT}Google login button clicked")
-            print(f"{Fore.CYAN}{Style.BRIGHT}Waiting 2 minutes for manual Google login...")
-            await asyncio.sleep(120)  # Даємо 2 хвилини користувачу залогінитися через Google
+            await page.wait_for_selector('button:has-text("Log In")', timeout=10000)
+            await page.click('button:has-text("Log In")')
+            await asyncio.sleep(2)  # Пауза після кліку
+            print(f"{Fore.GREEN}{Style.BRIGHT}'Log In' button clicked")
         except Exception as e:
-            print(f"{Fore.RED}{Style.BRIGHT}Failed to find Google login button: {str(e)}")
+            print(f"{Fore.RED}{Style.BRIGHT}Failed to find 'Log In' button: {str(e)}")
             return
 
+        # Натискаємо на email кнопку для відкриття форми логіну
+        print(f"{Fore.YELLOW}{Style.BRIGHT}Clicking email button to open login form")
+        try:
+            await page.wait_for_selector('#email-button', timeout=10000)
+            await page.click('#email-button')
+            await asyncio.sleep(2)  # Пауза після кліку
+            print(f"{Fore.GREEN}{Style.BRIGHT}Email button clicked")
+        except Exception as e:
+            print(f"{Fore.RED}{Style.BRIGHT}Failed to find email button: {str(e)}")
+            return
+
+        # Заповнюємо форму логіну
+        print(f"{Fore.YELLOW}{Style.BRIGHT}Filling login form")
+        
+        # Email field
+        try:
+            print(f"{Fore.YELLOW}{Style.BRIGHT}Waiting for email input field")
+            email_input = await page.wait_for_selector('input[name=email]', timeout=10000)
+            if email_input:
+                await email_input.click()  # Клікаємо для фокусу
+                await asyncio.sleep(0.5)
+                await email_input.fill('')  # Очищаємо поле
+                await email_input.type(os.getenv('DAYCOMICS_LOGIN'), delay=50)  # Повільно вводимо
+                print(f"{Fore.GREEN}{Style.BRIGHT}Email entered successfully")
+            else:
+                print(f"{Fore.RED}{Style.BRIGHT}Email input field not found")
+                return
+        except Exception as e:
+            print(f"{Fore.RED}{Style.BRIGHT}Failed to fill email: {str(e)}")
+            return
+
+        # Password field
+        try:
+            print(f"{Fore.YELLOW}{Style.BRIGHT}Filling password field")
+            password_input = await page.wait_for_selector('input[name=password]', timeout=10000)
+            if password_input:
+                await password_input.click()
+                await asyncio.sleep(0.5)
+                await password_input.fill('')
+                await password_input.type(os.getenv('DAYCOMICS_PASSWORD'), delay=50)
+                print(f"{Fore.GREEN}{Style.BRIGHT}Password entered successfully")
+            else:
+                print(f"{Fore.RED}{Style.BRIGHT}Password input field not found")
+                return
+        except Exception as e:
+            print(f"{Fore.RED}{Style.BRIGHT}Failed to fill password: {str(e)}")
+            return
+
+        # Click login button
+        print(f"{Fore.YELLOW}{Style.BRIGHT}Submitting login form")
+        try:
+            login_button = await page.wait_for_selector('#signButton', timeout=10000)
+            if login_button:
+                await login_button.click()
+                print(f"{Fore.GREEN}{Style.BRIGHT}Login button clicked")
+            else:
+                print(f"{Fore.RED}{Style.BRIGHT}Login button not found")
+        except Exception as e:
+            print(f"{Fore.RED}{Style.BRIGHT}Failed to click login button: {str(e)}")
+
+        # Wait for login to complete
+        print(f"{Fore.YELLOW}{Style.BRIGHT}Waiting for login to complete...")
+        await asyncio.sleep(5)
         print(f"{Fore.GREEN}{Style.BRIGHT}Login process completed")
 
     except Exception as e:
@@ -301,185 +363,6 @@ async def parse_daycomics(urls: List[str], progress_callback=None, start_episode
                         episodes.reverse()
                         print(f"{Fore.GREEN}{Style.BRIGHT}Episodes reversed to go from oldest to newest")
 
-                        # Перед переходом до першого епізоду і завантаженням епізодів, виконуємо пошук для отримання preview-thumbnail
-                        print(f"{Fore.YELLOW}{Style.BRIGHT}Starting search for preview thumbnail")
-                        try:
-                            # Шукаємо кнопку пошуку і натискаємо на неї для пошуку preview-thumbnail
-                            print(f"{Fore.YELLOW}{Style.BRIGHT}Looking for and clicking search button")
-
-                            # Використовуємо точний селектор
-                            search_button = await page.query_selector('#sideMenuRight ul li button[id="searchButton"]')
-
-                            # Альтернативні варіанти, якщо точний селектор не спрацює
-                            if not search_button:
-                                print(f"{Fore.YELLOW}{Style.BRIGHT}Trying specific selector")
-                                search_button = await page.query_selector('li button[id="searchButton"]')
-
-                            if not search_button:
-                                print(f"{Fore.YELLOW}{Style.BRIGHT}Trying broader search button selector")
-                                search_button = await page.query_selector('button[id="searchButton"]')
-
-                            if not search_button:
-                                print(f"{Fore.YELLOW}{Style.BRIGHT}Looking for button with search image")
-                                search_button = await page.query_selector('button span img[alt="search"]')
-                                if search_button:
-                                    # Якщо знайшли зображення пошуку, нам потрібно натиснути на батьківську кнопку
-                                    search_button = await page.evaluate('''
-                                    (el) => {
-                                        // Піднімаємося по ієрархії DOM до кнопки
-                                        let btn = el;
-                                        while (btn && btn.tagName !== 'BUTTON') {
-                                            btn = btn.parentElement;
-                                        }
-                                        return btn;
-                                    }
-                                    ''', search_button)
-
-                            # Виведемо на екран HTML сторінки для відлагодження, якщо кнопка не знайдена
-                            if not search_button:
-                                print(f"{Fore.RED}{Style.BRIGHT}Search button not found after multiple attempts")
-                                print(f"{Fore.YELLOW}{Style.BRIGHT}Taking a screenshot for debugging")
-                                # await page.screenshot(path=f"{comic_folder}/debug_no_search_button.png")  # Закоментовано
-
-                                # Виведемо DOM елементи навігації для відлагодження
-                                nav_html = await page.evaluate('''
-                                () => {
-                                    const nav = document.querySelector('#sideMenuRight');
-                                    return nav ? nav.outerHTML : 'Nav element not found';
-                                }
-                                ''')
-                                print(f"{Fore.YELLOW}{Style.BRIGHT}Navigation HTML for debugging: {nav_html[:200]}...")
-
-                                # Спробуємо прямий JavaScript клік
-                                print(f"{Fore.YELLOW}{Style.BRIGHT}Trying direct JavaScript click on search button")
-                                try:
-                                    await page.evaluate('''
-                                    () => {
-                                        const searchBtn = document.querySelector('#searchButton');
-                                        if (searchBtn) {
-                                            searchBtn.click();
-                                            return true;
-                                        }
-                                        return false;
-                                    }
-                                    ''')
-                                    await asyncio.sleep(3)
-                                except Exception as e:
-                                    print(f"{Fore.RED}{Style.BRIGHT}JavaScript click failed: {str(e)}")
-                            else:
-                                print(f"{Fore.GREEN}{Style.BRIGHT}Search button found, clicking...")
-                                # Використовуємо JavaScript для кліку, оскільки це може бути надійніше
-                                await page.evaluate('(btn) => btn.click()', search_button)
-                                await asyncio.sleep(3)  # Збільшуємо час очікування
-
-                            # Знаходимо поле пошуку та вводимо назву коміксу
-                            print(f"{Fore.YELLOW}{Style.BRIGHT}Entering comic title in search field: {title}")
-                            search_input = await page.query_selector('#headerSearchInput')
-
-                            if not search_input:
-                                print(f"{Fore.YELLOW}{Style.BRIGHT}Looking for search input by placeholder")
-                                search_input = await page.query_selector('input[placeholder*="Search"]')
-
-                            if not search_input:
-                                print(f"{Fore.YELLOW}{Style.BRIGHT}Taking screenshot of search form")
-                                # await page.screenshot(path=f"{comic_folder}/debug_search_form.png")  # Закоментовано
-
-                                # Спробуємо JavaScript для знаходження та заповнення поля вводу
-                                print(f"{Fore.YELLOW}{Style.BRIGHT}Trying JavaScript to find and fill search input")
-                                search_input_filled = await page.evaluate(f'''
-                                (title) => {{
-                                    // Шукаємо поле вводу з placeholder для пошуку
-                                    const input = document.querySelector('input[placeholder*="Search"], #headerSearchInput, input[type="text"]');
-                                    if (input) {{
-                                        input.value = title;
-                                        // Створюємо і запускаємо подію input для активації пошуку
-                                        const event = new Event('input', {{ bubbles: true }});
-                                        input.dispatchEvent(event);
-                                        return true;
-                                    }}
-                                    return false;
-                                }}
-                                ''', title)
-
-                                if search_input_filled:
-                                    print(f"{Fore.GREEN}{Style.BRIGHT}Search input filled with JavaScript")
-                                    await asyncio.sleep(5)  # Збільшений час очікування для результатів
-                            elif search_input:
-                                print(f"{Fore.GREEN}{Style.BRIGHT}Search input found, filling...")
-                                await search_input.fill('')  # Очищаємо поле вводу
-                                await search_input.type(title, delay=100)  # Повільно вводимо текст
-                                await asyncio.sleep(5)  # Збільшений час очікування для результатів
-
-                            # Знаходимо зображення з результатів пошуку
-                            print(f"{Fore.YELLOW}{Style.BRIGHT}Looking for preview image in search results")
-
-                            # Спочатку перевіримо, чи є результати пошуку
-                            result_container = await page.query_selector('#resultSearch')
-                            if result_container:
-                                print(f"{Fore.GREEN}{Style.BRIGHT}Search results container found")
-
-                                # Шукаємо зображення в результатах
-                                preview_img = await page.query_selector('#resultSearch img')
-
-                                if not preview_img:
-                                    print(f"{Fore.YELLOW}{Style.BRIGHT}Trying broader image selector in results")
-                                    preview_img = await page.query_selector('#resultSearch .thubBox img')
-
-                                if not preview_img:
-                                    print(f"{Fore.YELLOW}{Style.BRIGHT}Trying JavaScript to find image in results")
-                                    preview_src = await page.evaluate('''
-                                    () => {
-                                        const img = document.querySelector('#resultSearch img, .resultSearchItem img, .thubBox img');
-                                        if (img) {
-                                            return img.getAttribute('data-src') || img.src;
-                                        }
-                                        return null;
-                                    }
-                                    ''')
-
-                                    if preview_src:
-                                        print(
-                                            f"{Fore.GREEN}{Style.BRIGHT}Found preview image with JavaScript: {preview_src}")
-                                else:
-                                    # Отримуємо URL зображення
-                                    preview_src = await preview_img.get_attribute('src')
-                                    if not preview_src or 'img_loading' in preview_src:
-                                        preview_src = await preview_img.get_attribute('data-src')
-
-                                    print(f"{Fore.GREEN}{Style.BRIGHT}Found preview image: {preview_src}")
-
-                                # Зберігаємо preview-thumbnail в папці коміксу
-                                if preview_src:
-                                    preview_extension = preview_src.split('.')[-1]
-                                    if '?' in preview_extension:
-                                        preview_extension = preview_extension.split('?')[0]
-                                    preview_filename = f"{comic_folder}/preview-thumbnail.{preview_extension}"
-                                    await download_image(preview_src, preview_filename, session)
-                                    print(
-                                        f"{Fore.GREEN}{Style.BRIGHT}Downloaded preview thumbnail to: {preview_filename}")
-                                else:
-                                    print(f"{Fore.RED}{Style.BRIGHT}No preview image source found in search results")
-                            else:
-                                print(f"{Fore.RED}{Style.BRIGHT}No search results container found")
-
-                                # Робимо скріншот всієї сторінки для відлагодження
-                                # await page.screenshot(path=f"{comic_folder}/no_search_results.png")  # Закоментовано
-
-                            # Закриваємо пошукове поле (натискаємо Escape)
-                            print(f"{Fore.YELLOW}{Style.BRIGHT}Closing search by pressing Escape")
-                            await page.keyboard.press('Escape')
-                            await asyncio.sleep(1)
-
-                        except Exception as e:
-                            print(f"{Fore.RED}{Style.BRIGHT}Search failed")
-                            # Робимо скріншот поточної сторінки для відлагодження
-                            # try:
-                            #     await page.screenshot(path=f"{comic_folder}/search_error.png")
-                            #     print(f"{Fore.YELLOW}{Style.BRIGHT}Saved page screenshot for debugging")
-                            # except Exception:
-                            #     pass
-
-                        print(f"{Fore.YELLOW}{Style.BRIGHT}Completed search functionality block")
 
                         # Click to first episode
                         await page.click('.episodeListCon a')
@@ -494,7 +377,7 @@ async def parse_daycomics(urls: List[str], progress_callback=None, start_episode
                         except Exception as e:
                             print(f"{Fore.YELLOW}{Style.BRIGHT}ModalContainer not found, continuing...")
 
-                        await asyncio.sleep(5)
+                        await asyncio.sleep(1)  # Зменшено з 5 до 1 секунди
 
                         total_episodes = len(episodes)
                         current_episode = 0
@@ -552,42 +435,60 @@ async def parse_daycomics(urls: List[str], progress_callback=None, start_episode
                             print(
                                 f"{Fore.GREEN}{Style.BRIGHT}Episode {current_episode:03d}: Proceeding to download images...")
 
-                            await page.goto(episode['url'], wait_until='load')
+                            await page.goto(episode['url'], wait_until='domcontentloaded')  # Швидше завантаження
 
                             # Check for modal and dismiss it
                             try:
-                                modal = await page.wait_for_selector('#ModalContainer', timeout=5000)
+                                modal = await page.wait_for_selector('#ModalContainer', timeout=2000)  # Зменшено таймаут
                                 if modal:
                                     await page.click('.coachMarks04 button')
                                     print(f"{Fore.YELLOW}{Style.BRIGHT}Episode modal dismissed")
+                                    await asyncio.sleep(0.3)  # Мінімальна затримка після закриття
                             except Exception as e:
-                                print(f"{Fore.YELLOW}{Style.BRIGHT}ModalContainer not found for episode, continuing...")
+                                pass  # Не виводимо повідомлення, якщо модальне вікно не знайдено
 
                             # Get images - ОНОВЛЕНИЙ КОД ДЛЯ ЗБОРУ ЗОБРАЖЕНЬ
                             print(f"{Fore.YELLOW}{Style.BRIGHT}Collecting episode images...")
 
                             # Спочатку прокручуємо сторінку вниз, щоб завантажилися всі зображення
+                            # Оптимізований швидкий скрол
                             await page.evaluate('''
                                 () => {
                                     return new Promise((resolve) => {
-                                        let totalHeight = 0;
-                                        let distance = 100;
+                                        // Спочатку швидко прокручуємо до кінця
+                                        window.scrollTo(0, document.body.scrollHeight);
+                                        
+                                        // Потім робимо невеликий скрол назад і вперед для завантаження
+                                        let lastHeight = document.body.scrollHeight;
+                                        let attempts = 0;
                                         let timer = setInterval(() => {
-                                            let scrollHeight = document.body.scrollHeight;
-                                            window.scrollBy(0, distance);
-                                            totalHeight += distance;
-
-                                            if(totalHeight >= scrollHeight){
-                                                clearInterval(timer);
-                                                resolve();
+                                            window.scrollBy(0, 500); // Великий крок для швидкості
+                                            let currentHeight = document.body.scrollHeight;
+                                            
+                                            // Якщо висота не змінюється або досягли кінця
+                                            if (currentHeight === lastHeight || window.innerHeight + window.scrollY >= currentHeight - 10) {
+                                                attempts++;
+                                                if (attempts >= 2) { // Дві спроби без зміни висоти
+                                                    clearInterval(timer);
+                                                    resolve();
+                                                }
+                                            } else {
+                                                attempts = 0;
+                                                lastHeight = currentHeight;
                                             }
-                                        }, 100);
+                                        }, 30); // Ще менший інтервал для швидкості
+                                        
+                                        // Таймаут на випадок, якщо щось пішло не так
+                                        setTimeout(() => {
+                                            clearInterval(timer);
+                                            resolve();
+                                        }, 2000); // Максимум 2 секунди на скрол
                                     });
                                 }
                             ''')
 
                             # Чекаємо завантаження зображень
-                            await asyncio.sleep(3)
+                            await asyncio.sleep(0.5)  # Зменшено до 0.5 секунди
 
                             # Збираємо всі зображення з комікса
                             images = await page.evaluate('''
@@ -621,13 +522,17 @@ async def parse_daycomics(urls: List[str], progress_callback=None, start_episode
                             total_images = len(images)
                             current_image = 0
 
-                            # Download all images for this episode
+                            # Підготовка даних для паралельного завантаження
+                            semaphore = asyncio.Semaphore(10)  # Обмежуємо до 10 одночасних завантажень
+                            image_filenames = []
+                            
+                            async def download_with_semaphore(image_url, image_filename):
+                                async with semaphore:
+                                    await download_image(image_url, image_filename, session)
+                            
+                            # Створюємо задачі для паралельного завантаження
+                            download_tasks = []
                             for i, image in enumerate(images):
-                                current_image += 1
-                                update_console_output(comic_progress, title, total_episodes, current_episode,
-                                                      total_episodes,
-                                                      current_image, total_images)
-
                                 # Get image extension
                                 image_extension = image.split('.')[-1]
                                 if 'com' in image_extension:
@@ -635,10 +540,21 @@ async def parse_daycomics(urls: List[str], progress_callback=None, start_episode
                                 if '?' in image_extension:
                                     image_extension = image_extension.split('?')[0]
 
-                                # ЗМІНА: Використовуємо новий формат назви файлу з великої літери
+                                # ЗМІНА: Використовуємо новий формат назви файлу
                                 image_filename = f"{episode_folder}/episode_{current_episode:03d}_{i + 1:03d}.{image_extension}"
-                                await download_image(image, image_filename, session)
-                                episode['images'][i] = f"episode_{current_episode:03d}_{i + 1:03d}.{image_extension}"
+                                image_filenames.append(f"episode_{current_episode:03d}_{i + 1:03d}.{image_extension}")
+                                download_tasks.append(download_with_semaphore(image, image_filename))
+
+                            # Завантажуємо зображення паралельно з оновленням прогресу
+                            for completed_task in asyncio.as_completed(download_tasks):
+                                await completed_task
+                                current_image += 1
+                                update_console_output(comic_progress, title, total_episodes, current_episode,
+                                                      total_episodes,
+                                                      current_image, total_images)
+                            
+                            # Оновлюємо шляхи до зображень в episode
+                            episode['images'] = image_filenames
 
                         print(f"{Fore.GREEN}{Style.BRIGHT}Successfully parsed comic: {title}")
 
@@ -657,14 +573,6 @@ async def parse_daycomics(urls: List[str], progress_callback=None, start_episode
                             else:
                                 genres.append(item)
 
-                        # Перевіряємо наявність preview-thumbnail
-                        preview_thumbnail_path = ''
-                        preview_thumbnail_file = f"{comic_folder}/preview-thumbnail."
-                        for ext in ['webp', 'jpg', 'jpeg', 'png', 'gif']:
-                            if os.path.exists(f"{preview_thumbnail_file}{ext}"):
-                                preview_thumbnail_path = f"preview-thumbnail.{ext}"
-                                break
-
                         # Обробка thumbnail - беремо локальний шлях замість URL
                         thumbnail_extension = thumbnail.split('.')[-1]
                         if '?' in thumbnail_extension:
@@ -676,7 +584,6 @@ async def parse_daycomics(urls: List[str], progress_callback=None, start_episode
                             'originalTitle': original_title,
                             'description': description,
                             'thumbnail': thumbnail_local,
-                            'previewThumbnail': preview_thumbnail_path,
                             'thumbnailBackground': "",
                             'genres': genres,
                             'tags': tags,
@@ -738,14 +645,14 @@ async def parse_daycomics(urls: List[str], progress_callback=None, start_episode
 async def main():
     # Example usage
     urls = [
-        "https://daycomics.com/content/100559",
-        "https://daycomics.com/content/103121",
-        "https://daycomics.com/content/100571",
-        "https://daycomics.com/content/100040",
-        "https://daycomics.com/content/103120",
-        "https://daycomics.com/content/101631",
-        "https://daycomics.com/content/100806",
-        "https://daycomics.com/content/100703"
+        "https://daycomics.com/content/103703",
+        "https://daycomics.com/content/103018",
+        "https://daycomics.com/content/100569",
+        # "https://daycomics.com/content/100040",
+        # "https://daycomics.com/content/103120",
+        # "https://daycomics.com/content/101631",
+        # "https://daycomics.com/content/100806",
+        # "https://daycomics.com/content/100703"
     ]
     try:
         await parse_daycomics(urls)
@@ -780,14 +687,14 @@ if __name__ == "__main__":
     if args.example:
         print(f"{Fore.GREEN}{Style.BRIGHT}Running with example URL...")
         urls = [
-            "https://daycomics.com/content/100559",
-            "https://daycomics.com/content/103121",
-            "https://daycomics.com/content/100571",
-            "https://daycomics.com/content/100040",
-            "https://daycomics.com/content/103120",
-            "https://daycomics.com/content/101631",
-            "https://daycomics.com/content/100806",
-            "https://daycomics.com/content/100703"
+            "https://daycomics.com/content/103703",
+            "https://daycomics.com/content/103018",
+            "https://daycomics.com/content/100569",
+            # "https://daycomics.com/content/100040",
+            # "https://daycomics.com/content/103120",
+            # "https://daycomics.com/content/101631",
+            # "https://daycomics.com/content/100806",
+            # "https://daycomics.com/content/100703"
         ]
 
     if not urls:

@@ -115,7 +115,7 @@ Episode Images: {progress_bar(current_img, total_img) if current_img > 0 else 'W
 async def download_images_with_queue(
         images: List[str],
         episode_folder: str,
-        image_episode_title: str,
+        episode_number: int,
         update_progress: Callable[[int], None],
         session: aiohttp.ClientSession,
         concurrency: int = 20
@@ -139,10 +139,10 @@ async def download_images_with_queue(
                     if 'com' in image_extension:
                         image_extension = 'jpg'
 
-                    image_filename = f"{episode_folder}/episode_{image_episode_title}_{index + 1}.{image_extension}"
+                    image_filename = f"{episode_folder}/episode_{episode_number:03d}_{index + 1:03d}.{image_extension}"
 
                     await download_image(image, image_filename, session)
-                    results[index] = f"episode_{image_episode_title}_{index + 1}.{image_extension}"
+                    results[index] = f"episode_{episode_number:03d}_{index + 1:03d}.{image_extension}"
 
                     completed += 1
                     update_progress(completed)
@@ -300,29 +300,6 @@ async def parse_toomics(urls: List[str], progress_callback=None):
                             }
                         ''', clean_title)
 
-                        # Get preview thumbnail
-                        preview_thumbnail_filename = None
-                        try:
-                            await page.goto('https://toomics.com/en/webtoon/search?', wait_until='load')
-                            await asyncio.sleep(1)
-                            await page.fill('#search-term', title)
-                            await page.evaluate("Search.ajax_search()")
-                            await asyncio.sleep(1)
-
-                            await page.wait_for_selector('#search-list-items li a img', timeout=10000)
-                            preview_thumbnail = await page.eval_on_selector('#search-list-items li a img',
-                                                                            'el => el.src')
-                            print(f"{Fore.GREEN}{Style.BRIGHT}Preview Thumbnail: {preview_thumbnail}")
-
-                            preview_thumbnail_extension = preview_thumbnail.split('.')[-1]
-                            preview_thumbnail_filename = f"preview_thumbnail.{preview_thumbnail_extension}"
-                            await download_image(preview_thumbnail, f"{comic_folder}/{preview_thumbnail_filename}",
-                                                 session)
-                        except Exception as e:
-                            print(f"{Fore.YELLOW}{Style.BRIGHT}Couldn't find preview thumbnail: {str(e)}")
-                            preview_thumbnail = None
-                            preview_thumbnail_filename = None
-
                         total_episodes = len(episodes)
                         current_episode = 0
                         update_console_output(comic_progress, title, total_episodes, current_episode, total_episodes)
@@ -333,10 +310,13 @@ async def parse_toomics(urls: List[str], progress_callback=None):
                             update_console_output(comic_progress, title, total_episodes, current_episode,
                                                   total_episodes)
 
-                            # Extract just the number from episode title for directory name
-                            episode_number = episode['title'].replace('episode ', '')
-                            episode_folder = f"./toomics/{clean_title}/{episode_number}"
+                            # Create episode folder with leading zeros (like daycomics_scraper.py)
+                            episode_folder = f"./toomics/{clean_title}/{current_episode:03d}"
                             os.makedirs(episode_folder, exist_ok=True)
+                            
+                            # Update episode title and slug to match daycomics_scraper.py format
+                            episode['title'] = f"episode {current_episode:03d}"
+                            episode['slag'] = f"episode-{current_episode:03d}"
 
                             episode_thumbnail = episode['thumbnail']
                             episode_thumbnail_extension = episode_thumbnail.split('.')[-1]
@@ -379,9 +359,6 @@ async def parse_toomics(urls: List[str], progress_callback=None):
                                 episode['images'] = images
                                 del episode['url']  # Remove URL after use
 
-                                # Extract just the number from episode title for filename
-                                episode_number = episode['title'].replace('episode ', '')
-                                image_episode_title = re.sub(r'[^a-zA-Z0-9_]', '', episode_number)
                                 total_images = len(images)
                                 current_image = 0
 
@@ -395,7 +372,7 @@ async def parse_toomics(urls: List[str], progress_callback=None):
                                 episode['images'] = await download_images_with_queue(
                                     images,
                                     episode_folder,
-                                    image_episode_title,
+                                    current_episode,
                                     update_image_progress,
                                     session
                                 )
@@ -411,7 +388,6 @@ async def parse_toomics(urls: List[str], progress_callback=None):
                             'description': content,
                             'thumbnail': thumbnail_filename,
                             'thumbnailBackground': thumbnail_background_filename,
-                            'previewThumbnail': preview_thumbnail_filename,
                             'genres': genres,
                             'tags': [],
                             'episodes': episodes
@@ -476,8 +452,15 @@ async def parse_toomics(urls: List[str], progress_callback=None):
 async def main():
     # Example usage
     urls = [
-        "https://toomics.com/en/webtoon/episode/toon/8250",
-        # Add more URLs here
+        "https://toomics.com/en/webtoon/episode/toon/8729",
+        "https://toomics.com/en/webtoon/episode/toon/8715",
+        "https://toomics.com/en/webtoon/episode/toon/8724",
+        "https://toomics.com/en/webtoon/episode/toon/8649",
+        "https://toomics.com/en/webtoon/episode/toon/8651",
+        "https://toomics.com/en/webtoon/episode/toon/8700",
+        "https://toomics.com/en/webtoon/episode/toon/8717",
+        "https://toomics.com/en/webtoon/episode/toon/8646",
+        "https://toomics.com/en/webtoon/episode/toon/8715"
     ]
 
     try:
@@ -511,9 +494,17 @@ if __name__ == "__main__":
 
     if args.example:
         print(f"{Fore.GREEN}{Style.BRIGHT}Running with example URL...")
-        urls = ["https://toomics.com/en/webtoon/episode/toon/7933",
-                "https://toomics.com/en/webtoon/episode/toon/7152",
-                "https://toomics.com/en/webtoon/episode/toon/5221"]
+        urls = [
+            "https://toomics.com/en/webtoon/episode/toon/8729",
+            "https://toomics.com/en/webtoon/episode/toon/8715",
+            "https://toomics.com/en/webtoon/episode/toon/8724",
+            "https://toomics.com/en/webtoon/episode/toon/8649",
+            "https://toomics.com/en/webtoon/episode/toon/8651",
+            "https://toomics.com/en/webtoon/episode/toon/8700",
+            "https://toomics.com/en/webtoon/episode/toon/8717",
+            "https://toomics.com/en/webtoon/episode/toon/8646",
+            "https://toomics.com/en/webtoon/episode/toon/8715"
+        ]
 
     if not urls:
         print(f"{Fore.YELLOW}{Style.BRIGHT}No URLs provided. Please use --urls, --file, or --example")
