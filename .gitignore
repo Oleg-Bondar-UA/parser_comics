@@ -142,3 +142,7 @@ chromedriver_binary/
 /honeytoon/
 /toomics/
 /daycomics/
+/selenium_profile/
+/toongod/
+/downloaded_files/
+/.playwright_toongod_profile/
