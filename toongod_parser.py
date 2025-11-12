@@ -377,24 +377,47 @@ def scrape_episode(
     episode_meta: Dict[str, str],
     comic_dir: Path,
     episode_index: int,
+    max_attempts: int = 3,
 ) -> Dict[str, object]:
     episode_url = episode_meta["url"]
-    driver.get(episode_url)
-
-    if not page_has_any(driver, IMAGE_SELECTORS):
-        print(
-            f"{Fore.YELLOW}{Style.BRIGHT}Після очікування зображення епізоду поки не знайдені. Продовжую..."
-        )
-
-    time.sleep(2)
-    session = build_session_from_driver(driver)
-
     episode_folder = comic_dir / f"{episode_index:03d}"
     ensure_directory(episode_folder)
 
-    image_urls = extract_image_urls(driver)
+    image_urls: List[str] = []
+    download_session = session
+
+    for attempt in range(1, max_attempts + 1):
+        if attempt == 1:
+            driver.get(episode_url)
+        else:
+            print(
+                f"{Fore.YELLOW}{Style.BRIGHT}Повторна спроба {attempt}/{max_attempts} для епізоду: {episode_url}"
+            )
+            driver.get(episode_url)
+
+        if not page_has_any(driver, IMAGE_SELECTORS):
+            print(
+                f"{Fore.YELLOW}{Style.BRIGHT}Після очікування зображення епізоду поки не знайдені. Продовжую..."
+            )
+
+        time.sleep(2)
+        download_session = build_session_from_driver(driver)
+
+        image_urls = extract_image_urls(driver)
+        if image_urls:
+            break
+
+        print(
+            f"{Fore.YELLOW}{Style.BRIGHT}Не знайдено зображень (спроба {attempt}/{max_attempts})."
+        )
+        if attempt < max_attempts:
+            print(f"{Fore.YELLOW}{Style.BRIGHT}Оновлюю сторінку та повторюю...")
+            time.sleep(3)
+
     if not image_urls:
-        print(f"{Fore.RED}{Style.BRIGHT}Не знайдено зображень для епізоду: {episode_url}")
+        print(
+            f"{Fore.RED}{Style.BRIGHT}Не знайдено зображень для епізоду: {episode_url}"
+        )
 
     downloaded_images: List[str] = []
     for image_position, image_url in enumerate(image_urls, start=1):
@@ -403,7 +426,7 @@ def scrape_episode(
             extension = ".jpg"
         filename = f"episode_{episode_index:03d}_{image_position:03d}{extension}"
         destination = episode_folder / filename
-        result = download_file(session, image_url, destination, referer=episode_url)
+        result = download_file(download_session, image_url, destination, referer=episode_url)
         if result:
             downloaded_images.append(filename)
 
@@ -558,13 +581,10 @@ if __name__ == "__main__":
         url_list.extend(read_urls_from_file(Path(args.file)))
     if args.example:
         example_urls = [
-            "https://www.toongod.org/webtoon/boarding-diary-uncensored-manhwa/",
-            "https://www.toongod.org/webtoon/stepmother-friends-uncensored-manhwa/",
-            "https://www.toongod.org/webtoon/is-there-an-empty-room-uncensored/",
-            "https://www.toongod.org/webtoon/fitness-uncensored-manhwa/",
-            "https://www.toongod.org/webtoon/change-wife-uncensored-manhwa/",
-            "https://www.toongod.org/webtoon/secret-class-uncensored-manhwa/",
-            "https://www.toongod.org/webtoon/my-stepmom-uncensored-manhwa/",
+            "https://www.toongod.org/webtoon/someone-stop-her-uncensored/",
+            "https://www.toongod.org/webtoon/master-of-intimacy-uncensored/",
+            "https://www.toongod.org/webtoon/no-i-want-her-uncensored/",
+            "https://www.toongod.org/webtoon/kangsae-the-strong-uncensored/",
         ]
         url_list.extend(example_urls)
 
